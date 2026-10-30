@@ -1,5 +1,5 @@
 /* ========== Config ========== */
-const FORM_ENDPOINT = ""; // TODO: set email collection endpoint (POST JSON {email}). Empty = no backend, only local success message.
+const FORM_ENDPOINT = "/subscribe/";
 /* ============================ */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -14,6 +14,19 @@ const statusEl = document.getElementById("form-status");
 const submitBtn = form.querySelector('button[type="submit"]');
 const hero = document.querySelector(".hero");
 const video = document.querySelector(".hero__video");
+
+function getCookie(name) {
+  const match = document.cookie.match(
+    new RegExp("(?:^|; )" + name.replace(/([.$?*|{}()[\]\\/+^])/g, "\\$1") + "=([^;]*)")
+  );
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
+function getCsrfToken() {
+  const input = form.querySelector('input[name="csrfmiddlewaretoken"]');
+  if (input && input.value) return input.value;
+  return getCookie("csrftoken");
+}
 
 function setStatus(message, isError) {
   statusEl.textContent = message;
@@ -69,26 +82,42 @@ async function onSubmit(event) {
   emailInput.setAttribute("aria-invalid", "false");
   submitBtn.disabled = true;
 
-  try {
-    if (FORM_ENDPOINT) {
-      const res = await fetch(FORM_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+  const endpoint = form.getAttribute("action") || FORM_ENDPOINT;
+  const websiteInput = form.querySelector('input[name="website"]');
+  const payload = {
+    email,
+    website: websiteInput ? websiteInput.value : "",
+  };
 
-      if (!res.ok) {
-        setStatus(FAIL_MSG, true);
-        return;
-      }
-    } else {
-      console.info(
-        "[Gestia Home] FORM_ENDPOINT is empty — email not sent anywhere:",
-        email
-      );
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify(payload),
+      credentials: "same-origin",
+    });
+
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
     }
 
-    setStatus(SUCCESS_MSG, false);
+    if (res.status === 429) {
+      setStatus((data && data.message) || FAIL_MSG, true);
+      return;
+    }
+
+    if (!res.ok) {
+      setStatus((data && data.message) || FAIL_MSG, true);
+      return;
+    }
+
+    setStatus((data && data.message) || SUCCESS_MSG, false);
     form.reset();
   } catch {
     setStatus(FAIL_MSG, true);

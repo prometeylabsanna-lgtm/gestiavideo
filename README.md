@@ -1,48 +1,61 @@
 # Gestia Home — coming soon
 
-Статична сторінка «скоро» для Gestia Home: відео-фон, логотип і форма збору e-mail перед стартом продажів святкових боксів.
+Django-проєкт «скоро» для Gestia Home: відео-фон, форма підписки на e-mail, Unfold-адмінка. Візуал сторінки збережено піксель-в-піксель зі статичної версії.
+
+## Стек
+
+- Django 5.2 LTS, django-unfold, gunicorn, whitenoise
+- SQLite локально; PostgreSQL у Docker / прод
+- Python 3.12
+
+## Локальний запуск (venv + SQLite)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export DEBUG=1
+export ADMIN_URL=admin-local/
+python manage.py migrate
+python manage.py runserver
+```
+
+Відкрийте http://127.0.0.1:8000/  
+Адмінка: http://127.0.0.1:8000/admin-local/
+
+Тести:
+
+```bash
+python manage.py test
+```
+
+## Docker (dev)
+
+```bash
+cp .env.example .env
+# заповніть SECRET_KEY, ADMIN_URL, DEBUG=1 тощо
+docker compose up --build
+```
+
+## Прод
+
+Див. [docs/DEPLOY_uk.md](docs/DEPLOY_uk.md).
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
 
 ## Структура
 
 ```
-.
-├── index.html          # розмітка сторінки
-├── styles.css          # стилі та адаптив
-├── script.js           # форма + обробка video / reduced-motion
-├── SPEC.md             # технічна специфікація
-├── README.md
-├── .gitignore
-└── assets/
-    ├── img/            # логотип, favicon, OG, роздільники
-    └── video/          # bg.mp4, bg.webm, poster.jpg, poster.webp
+config/           # settings, urls, wsgi
+subscribers/      # модель, /subscribe/, адмінка, тести
+templates/        # index.html
+static/           # styles.css, script.js, assets/
+nginx/            # prod reverse proxy
+docs/DEPLOY_uk.md
 ```
 
-## Локальний запуск
+## Підписка
 
-Потрібен лише статичний сервер (через `file://` відео може не грати в деяких браузерах):
-
-```bash
-python3 -m http.server
-```
-
-Відкрийте у браузері: http://localhost:8000
-
-## Форма e-mail
-
-У `script.js` на початку файлу:
-
-```js
-const FORM_ENDPOINT = ""; // TODO: set email collection endpoint (POST JSON {email}). Empty = no backend, only local success message.
-```
-
-- Якщо `FORM_ENDPOINT` порожній — запит нікуди не йде, показується локальне повідомлення про успіх. **E-mail зараз ніде не зберігаються.**
-- Якщо вказати URL — на submit йде `POST` з JSON `{ "email": "..." }`.
-
-## Ассети
-
-Походження макету: Figma, node `5:1560` («Головна»), файл `dVjiuXFknESrOGvKPX4Wh4`.  
-Відео оптимізовано через `ffmpeg` (H.264 / VP9, без звуку).
-
-## Деплой
-
-Будь-який статичний хостинг: GitHub Pages, Netlify, Cloudflare Pages, nginx тощо. Білд-крок не потрібен — достатньо викласти вміст кореня репозиторію.
+`POST /subscribe/` (JSON або form) — CSRF, honeypot `website`, rate limit 5 / 10 хв на IP.

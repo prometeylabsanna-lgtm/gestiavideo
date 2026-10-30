@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -8,24 +9,26 @@
 
   <title>Gestia Home — святкові бокси вже скоро</title>
 
+  <link rel="canonical" href="{{ SITE_URL }}/">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ SITE_URL }}/">
   <meta property="og:title" content="Gestia Home — святкові бокси вже скоро">
   <meta property="og:description" content="Gestia Home — святкові бокси з живою хвоєю для декорування новорічного столу своїми руками. Залиш e-mail і дізнайся першою про старт продажів.">
-  <meta property="og:image" content="assets/img/og-image.jpg">
+  <meta property="og:image" content="{{ SITE_URL }}/static/assets/img/og-image.jpg">
   <meta property="og:locale" content="uk_UA">
   <meta name="twitter:card" content="summary_large_image">
 
-  <link rel="icon" href="assets/img/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
-  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="icon" href="{% static 'assets/img/favicon.ico' %}" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'assets/img/favicon-32.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'assets/img/apple-touch-icon.png' %}">
 
-  <link rel="preload" as="image" href="assets/video/poster.jpg">
+  <link rel="preload" as="image" href="{% static 'assets/video/poster.jpg' %}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&subset=cyrillic&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="{% static 'styles.css' %}">
 </head>
 <body>
   <section class="hero" aria-label="Gestia Home — скоро">
@@ -36,18 +39,18 @@
       loop
       playsinline
       preload="auto"
-      poster="assets/video/poster.jpg"
+      poster="{% static 'assets/video/poster.jpg' %}"
       aria-hidden="true"
     >
-      <source src="assets/video/bg.webm" type="video/webm">
-      <source src="assets/video/bg.mp4" type="video/mp4">
+      <source src="{% static 'assets/video/bg.webm' %}" type="video/webm">
+      <source src="{% static 'assets/video/bg.mp4' %}" type="video/mp4">
     </video>
     <div class="hero__overlay" aria-hidden="true"></div>
 
     <div class="hero__content">
       <img
         class="hero__logo"
-        src="assets/img/logo.png"
+        src="{% static 'assets/img/logo.png' %}"
         alt="Gestia Home"
         width="190"
         height="73"
@@ -58,13 +61,14 @@
 
         <div class="hero__desc">
           <p>Ми вже збираємо свіжу хвою до святкових боксів Gestia Home, щоб ти могла легко своїми руками декорувати новорічний стіл</p>
-          <img class="hero__divider hero__divider--1" src="assets/img/divider-1.svg" width="140" height="1" alt="">
+          <img class="hero__divider hero__divider--1" src="{% static 'assets/img/divider-1.svg' %}" width="140" height="1" alt="">
           <p>Ще трішки — і мистецтво гостинності стане частиною твоїх сімейних традицій!</p>
-          <img class="hero__divider hero__divider--2" src="assets/img/divider-2.svg" width="70.5" height="1" alt="">
+          <img class="hero__divider hero__divider--2" src="{% static 'assets/img/divider-2.svg' %}" width="70.5" height="1" alt="">
           <p>Не пропусти старт продажів — залиш свій email та дізнайся першою, коли святкові бокси стануть доступними!</p>
         </div>
 
-        <form class="hero__form" id="waitlist-form" novalidate>
+        <form class="hero__form" id="waitlist-form" action="/subscribe/" method="post" novalidate>
+          {% csrf_token %}
           <div class="hero__field">
             <label class="visually-hidden" for="email">E-mail</label>
             <input
@@ -75,6 +79,17 @@
               autocomplete="email"
               placeholder="Введіть ваш e-mail"
             >
+            <label class="visually-hidden" for="website">Website</label>
+            <input
+              type="text"
+              id="website"
+              name="website"
+              value=""
+              tabindex="-1"
+              autocomplete="off"
+              aria-hidden="true"
+              class="visually-hidden"
+            >
             <button type="submit">Дізнатись першою</button>
           </div>
           <p class="hero__status" id="form-status" role="status" aria-live="polite"></p>
@@ -83,6 +98,6 @@
     </div>
   </section>
 
-  <script src="script.js"></script>
+  <script src="{% static 'script.js' %}"></script>
 </body>
 </html>
