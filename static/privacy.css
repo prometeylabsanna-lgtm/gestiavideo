@@ -1,0 +1,124 @@
+.page--privacy {
+  min-height: 100svh;
+  min-height: 100dvh;
+  background-color: var(--dark);
+  background-image:
+    radial-gradient(ellipse at top, rgba(117, 76, 40, 0.25) 0%, transparent 55%),
+    linear-gradient(180deg, #2e160c 0%, var(--dark) 40%);
+  color: var(--cream);
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.page__main {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding:
+    max(48px, env(safe-area-inset-top, 0px))
+    max(24px, env(safe-area-inset-right, 0px))
+    max(48px, env(safe-area-inset-bottom, 0px))
+    max(24px, env(safe-area-inset-left, 0px));
+}
+
+.page__brand {
+  display: inline-block;
+  margin-bottom: 32px;
+}
+
+.page__brand img {
+  display: block;
+  width: 140px;
+  height: auto;
+}
+
+.page__article {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.page__title {
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--cream);
+  margin-bottom: 8px;
+}
+
+.page__lead,
+.page__article p,
+.page__list {
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+}
+
+.page__heading {
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+  margin-top: 12px;
+}
+
+.page__list {
+  padding-left: 1.25em;
+}
+
+.page__list li + li {
+  margin-top: 6px;
+}
+
+.page__article a {
+  color: var(--sand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.page__back {
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .page__main {
+    padding-top: max(40px, env(safe-area-inset-top, 0px));
+  }
+
+  .page__title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .page__main {
+    max-width: 100%;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .page__brand img {
+    width: 120px;
+  }
+
+  .page__title {
+    font-size: 22px;
+  }
+
+  .page__lead,
+  .page__article p,
+  .page__list {
+    font-size: 15px;
+  }
+
+  .page__heading {
+    font-size: 17px;
+  }
+}

@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Політика конфіденційності Gestia Home — які дані збираємо і як їх зберігаємо.">
+  <meta name="theme-color" content="#251008">
+  <title>Політика конфіденційності — Gestia Home</title>
+  <link rel="canonical" href="{{ SITE_URL }}/privacy/">
+  <link rel="icon" href="{% static 'assets/img/favicon.ico' %}" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&subset=cyrillic&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'styles.css' %}">
+  <link rel="stylesheet" href="{% static 'privacy.css' %}">
+</head>
+<body class="page page--privacy">
+  <main class="page__main">
+    <a class="page__brand" href="/">
+      <img
+        src="{% static 'assets/img/logo.png' %}"
+        alt="Gestia Home"
+        width="140"
+        height="54"
+      >
+    </a>
+
+    <article class="page__article">
+      <h1 class="page__title">Політика конфіденційності</h1>
+      <p class="page__lead">
+        Ця сторінка пояснює, які дані ми збираємо на сайті Gestia Home
+        і з якою метою.
+      </p>
+
+      <h2 class="page__heading">Які дані збираємо</h2>
+      <ul class="page__list">
+        <li>адресу електронної пошти, яку ви вказуєте у формі очікування;</li>
+        <li>дату й час підписки;</li>
+        <li>хеш IP-адреси (одностороннє хешування з сіллю; сирий IP не зберігаємо).</li>
+      </ul>
+      <p>
+        Ми не зберігаємо User-Agent браузера та інші зайві ідентифікатори.
+      </p>
+
+      <h2 class="page__heading">Мета обробки</h2>
+      <p>
+        E-mail потрібен лише щоб повідомити вас про старт продажів святкових
+        боксів Gestia Home. Хеш IP використовується для захисту форми від
+        зловживань (обмеження частоти запитів).
+      </p>
+
+      <h2 class="page__heading">Строк зберігання</h2>
+      <p>
+        Дані зберігаються до вашої відписки або до запуску продажів і ще
+        <strong>12 місяців</strong> після нього (документована ретенція).
+        Після цього записи видаляються або анонімізуються.
+      </p>
+
+      <h2 class="page__heading">Контакт і видалення</h2>
+      <p>
+        Щоб відписатися або попросити видалити ваші дані, напишіть на
+        <a href="mailto:privacy@gestia-home.com">privacy@gestia-home.com</a>
+        з адреси, яку ви вказували при підписці. Ми опрацюємо запит без
+        зайвих зволікань.
+      </p>
+
+      <p class="page__back">
+        <a href="/">← На головну</a>
+      </p>
+    </article>
+  </main>
+</body>
+</html>

@@ -11,11 +11,18 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 RUNNING_TESTS = len(sys.argv) > 1 and sys.argv[1] == "test"
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-change-me")
-
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes", "on")
 if RUNNING_TESTS and "DEBUG" not in os.environ:
     DEBUG = True
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "").strip()
+if not SECRET_KEY:
+    if DEBUG or RUNNING_TESTS:
+        SECRET_KEY = "dev-insecure-change-me"
+    else:
+        raise ImproperlyConfigured(
+            "SECRET_KEY must be set in production (DEBUG off)."
+        )
 
 ALLOWED_HOSTS = [
     h.strip()
@@ -35,7 +42,15 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 SITE_URL = os.environ.get("SITE_URL", "https://gestia-home.com").rstrip("/")
-IP_HASH_SALT = os.environ.get("IP_HASH_SALT", "dev-ip-hash-salt")
+
+IP_HASH_SALT = os.environ.get("IP_HASH_SALT", "").strip()
+if not IP_HASH_SALT:
+    if DEBUG or RUNNING_TESTS:
+        IP_HASH_SALT = "dev-ip-hash-salt"
+    else:
+        raise ImproperlyConfigured(
+            "IP_HASH_SALT must be set in production (DEBUG off)."
+        )
 
 _admin_url = os.environ.get("ADMIN_URL", "").strip()
 if _admin_url:
@@ -55,6 +70,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "axes",
     "subscribers",
 ]
 
@@ -67,7 +83,23 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "axes.middleware.AxesMiddleware",
 ]
+
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# django-axes: lockout admin after 5 failures for 1 hour
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 1
+AXES_ONLY_ADMIN_SITE = True
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_TEMPLATE = "axes_lockout.html"
+AXES_IPWARE_META_PRECEDENCE_ORDER = ("HTTP_X_REAL_IP", "REMOTE_ADDR")
+AXES_CLIENT_IP_CALLABLE = "subscribers.views.axes_client_ip"
 
 ROOT_URLCONF = "config.urls"
 
@@ -132,12 +164,20 @@ UNFOLD = {
     "SITE_HEADER": "Gestia Home",
 }
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "gestia-subscribers",
+if RUNNING_TESTS:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "gestia-subscribers",
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+            "LOCATION": "django_cache",
+        }
+    }
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 X_FRAME_OPTIONS = "DENY"
@@ -153,6 +193,6 @@ if not DEBUG:
         "yes",
         "on",
     )
-    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "31536000"))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = False

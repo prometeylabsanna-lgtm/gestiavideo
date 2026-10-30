@@ -33,11 +33,14 @@ python3 -c "import secrets; print(secrets.token_urlsafe(50))"
 
 У `.env` заповніть:
 
-- `SECRET_KEY` — згенерований рядок
+- `SECRET_KEY` — згенерований рядок (**обовʼязково** в проді)
 - `ADMIN_URL` — **власний** секретний шлях (не `admin/`), зі слешем наприкінці
-- `IP_HASH_SALT` — випадковий рядок
+- `IP_HASH_SALT` — випадковий рядок (**обовʼязково** в проді)
 - `POSTGRES_PASSWORD` і відповідний пароль у `DATABASE_URL`
 - `DEBUG=0`
+- `SECURE_HSTS_SECONDS=31536000` (після того як HTTPS стабільно працює; можна змінити через env)
+
+Без `SECRET_KEY` / `IP_HASH_SALT` / `ADMIN_URL` при `DEBUG=0` застосунок **не стартує**.
 
 ## 4. Запуск
 
@@ -52,36 +55,71 @@ docker compose -f docker-compose.prod.yml exec web python manage.py createsuperu
 ```
 
 Адмінка буде за адресою `https://gestia-home.com/<ваш-ADMIN_URL>` (після SSL).
+Після 5 невдалих спроб входу акаунт/IP блокується на 1 годину (django-axes).
 
-## 5. HTTPS (certbot, webroot)
+## 5. HTTPS (certbot, webroot) + редірект 80→443
 
-Переконайтесь, що HTTP відкритий і DNS вказує на сервер. Видайте сертифікат через контейнер certbot (webroot `/var/www/certbot`), наприклад для `gestia-home.com` і `www.gestia-home.com`.
+Переконайтесь, що HTTP відкритий і DNS вказує на сервер. Видайте сертифікат через контейнер certbot (webroot `/var/www/certbot`), наприклад:
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm certbot certonly \
+  --webroot -w /var/www/certbot \
+  -d gestia-home.com -d www.gestia-home.com \
+  --email YOUR@EMAIL --agree-tos --no-eff-email
+```
 
 Потім у `nginx/conf.d/gestia.conf`:
 
-1. Розкоментуйте блок `listen 443 ssl`.
-2. Додайте редірект з порту 80 на HTTPS (залишивши `/.well-known/acme-challenge/`).
+1. Розкоментуйте блок `listen 443 ssl http2` (SSL-шаблон уже з security headers, CSP, HSTS, `limit_req` на `/subscribe/`).
+2. У блоці `listen 80` розкоментуйте `return 301 https://$host$request_uri;` і **приберіть** (закоментуйте) proxy-локації `/` та `/subscribe/`, залишивши лише `/.well-known/acme-challenge/`.
 3. Перезавантажте nginx:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 ```
 
+Перевірка: `curl -I http://gestia-home.com/` має дати `301` на HTTPS; на 443 — заголовки CSP / HSTS / `nosniff`.
+
 ## 6. HSTS
 
-Після того як SSL стабільно працює, у `.env` підніміть:
+У проді Django за замовчуванням ставить `SECURE_HSTS_SECONDS=31536000` (можна перевизначити env). Nginx на 443 також віддає HSTS. Не вмикайте HSTS, доки HTTPS не працює стабільно для обох імен хоста.
 
+## 7. Бекап Postgres
+
+Скрипт: `scripts/backup_db.sh` — `pg_dump` через `docker compose exec db`, gzip у `/var/backups/gestia/`, ротація **14 днів**.
+
+Один раз на сервері:
+
+```bash
+sudo mkdir -p /var/backups/gestia
+sudo chown "$USER" /var/backups/gestia
+chmod +x scripts/backup_db.sh
+./scripts/backup_db.sh
 ```
-SECURE_HSTS_SECONDS=31536000
+
+Cron (щодня о 03:15, з каталогу проєкту):
+
+```cron
+15 3 * * * cd /path/to/gestia && ./scripts/backup_db.sh >> /var/log/gestia-backup.log 2>&1
 ```
 
-і перезапустіть `web`.
+Рекомендовано копіювати `.sql.gz` ще й offsite (DO Spaces / інший сервер).
 
-## 7. Оновлення
+### Відновлення з бекапу
+
+```bash
+gunzip -c /var/backups/gestia/gestia_YYYYMMDD_HHMMSS.sql.gz \
+  | docker compose -f docker-compose.prod.yml exec -T db \
+    sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
+
+Перед restore зупиніть `web` або переконайтесь, що немає активних записів у БД. Після відновлення: `docker compose -f docker-compose.prod.yml restart web`.
+
+## 8. Оновлення
 
 ```bash
 git pull
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Міграції виконуються автоматично в entrypoint.
+Міграції та `createcachetable` виконуються автоматично в entrypoint.

@@ -8,7 +8,6 @@ class Subscriber(models.Model):
     source = models.CharField("Джерело", max_length=64, default="coming-soon")
     lang = models.CharField("Мова", max_length=8, default="uk")
     ip_hash = models.CharField("Хеш IP", max_length=64, blank=True)
-    user_agent = models.CharField("User-Agent", max_length=255, blank=True)
 
     class Meta:
         verbose_name = "Підписник"

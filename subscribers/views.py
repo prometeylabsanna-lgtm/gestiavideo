@@ -27,11 +27,22 @@ class IndexView(TemplateView):
     template_name = "index.html"
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class PrivacyView(TemplateView):
+    template_name = "privacy.html"
+
+
 def _client_ip(request):
-    forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR", "")
+    """Trust only X-Real-IP set by nginx; never client-controlled X-Forwarded-For."""
+    real_ip = (request.META.get("HTTP_X_REAL_IP") or "").strip()
+    if real_ip:
+        return real_ip
+    return request.META.get("REMOTE_ADDR", "") or ""
+
+
+def axes_client_ip(request):
+    """django-axes IP callback — same source as subscribe rate limit."""
+    return _client_ip(request)
 
 
 def _ip_hash(ip: str) -> str:
@@ -77,7 +88,6 @@ def subscribe(request):
         return JsonResponse({"ok": False, "message": INVALID_MSG}, status=400)
 
     email = email_raw.strip().lower()
-    ua = (request.META.get("HTTP_USER_AGENT") or "")[:255]
 
     if Subscriber.objects.filter(email__iexact=email).exists():
         return JsonResponse({"ok": True, "message": SUCCESS_MSG})
@@ -85,7 +95,6 @@ def subscribe(request):
     Subscriber.objects.create(
         email=email,
         ip_hash=ip_hash,
-        user_agent=ua,
     )
     return JsonResponse({"ok": True, "message": SUCCESS_MSG})
 
@@ -107,6 +116,9 @@ def sitemap_xml(request):
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         "  <url>\n"
         f"    <loc>{site}/</loc>\n"
+        "  </url>\n"
+        "  <url>\n"
+        f"    <loc>{site}/privacy/</loc>\n"
         "  </url>\n"
         "</urlset>\n"
     )

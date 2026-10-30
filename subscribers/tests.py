@@ -1,3 +1,6 @@
+import hashlib
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
@@ -19,6 +22,23 @@ class IndexTests(TestCase):
         self.assertContains(response, 'rel="canonical"')
         self.assertContains(response, "https://gestia-home.com/")
         self.assertContains(response, 'name="website"')
+        self.assertContains(response, 'href="/privacy/"')
+        self.assertContains(response, "політикою конфіденційності")
+
+
+@override_settings(
+    DEBUG=True,
+    ADMIN_URL="admin-local/",
+    SECURE_SSL_REDIRECT=False,
+)
+class PrivacyTests(TestCase):
+    def test_privacy_page_renders(self):
+        response = self.client.get(reverse("privacy"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Політика конфіденційності")
+        self.assertContains(response, "хеш IP")
+        self.assertContains(response, "12 місяців")
+        self.assertContains(response, "privacy@gestia-home.com")
 
 
 @override_settings(
@@ -47,6 +67,7 @@ class SubscribeTests(TestCase):
         self.assertEqual(Subscriber.objects.count(), 1)
         sub = Subscriber.objects.get()
         self.assertEqual(sub.email, "user@example.com")
+        self.assertFalse(hasattr(sub, "user_agent"))
 
     def test_duplicate_different_case_success_one_row(self):
         self._post_json({"email": "dup@example.com"})
@@ -78,6 +99,36 @@ class SubscribeTests(TestCase):
         response = self._post_json({"email": "overflow@example.com"})
         self.assertEqual(response.status_code, 429)
         self.assertFalse(response.json()["ok"])
+
+    def test_x_real_ip_used_for_hash(self):
+        response = self._post_json(
+            {"email": "realip@example.com"},
+            HTTP_X_FORWARDED_FOR="1.2.3.4",
+            HTTP_X_REAL_IP="9.8.7.6",
+        )
+        self.assertEqual(response.status_code, 200)
+        sub = Subscriber.objects.get()
+        expected = hashlib.sha256(
+            f"{settings.IP_HASH_SALT}9.8.7.6".encode()
+        ).hexdigest()
+        self.assertEqual(sub.ip_hash, expected)
+
+    def test_x_forwarded_for_ignored_falls_back_to_remote_addr(self):
+        response = self._post_json(
+            {"email": "spoof@example.com"},
+            HTTP_X_FORWARDED_FOR="1.2.3.4",
+            REMOTE_ADDR="127.0.0.1",
+        )
+        self.assertEqual(response.status_code, 200)
+        sub = Subscriber.objects.get()
+        expected = hashlib.sha256(
+            f"{settings.IP_HASH_SALT}127.0.0.1".encode()
+        ).hexdigest()
+        self.assertEqual(sub.ip_hash, expected)
+        spoofed = hashlib.sha256(
+            f"{settings.IP_HASH_SALT}1.2.3.4".encode()
+        ).hexdigest()
+        self.assertNotEqual(sub.ip_hash, spoofed)
 
 
 @override_settings(
