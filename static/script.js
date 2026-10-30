@@ -38,18 +38,39 @@ function clearStatus() {
   statusEl.classList.remove("hero__status--error");
 }
 
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 function handleReducedMotion() {
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!reduce || !video) return;
+  if (!prefersReducedMotion() || !video) return;
 
   hero.classList.add("hero--reduced-motion");
   video.pause();
-  video.removeAttribute("autoplay");
   video.remove();
 }
 
-function handleVideoFallback() {
-  if (!video || hero.classList.contains("hero--reduced-motion")) return;
+function initVideo() {
+  if (!video || prefersReducedMotion()) return;
+
+  const webm = video.getAttribute("data-webm");
+  const mp4 = video.getAttribute("data-mp4");
+
+  if (webm) {
+    const sourceWebm = document.createElement("source");
+    sourceWebm.src = webm;
+    sourceWebm.type = "video/webm";
+    video.appendChild(sourceWebm);
+  }
+
+  if (mp4) {
+    const sourceMp4 = document.createElement("source");
+    sourceMp4.src = mp4;
+    sourceMp4.type = "video/mp4";
+    video.appendChild(sourceMp4);
+  }
+
+  video.load();
 
   const fail = () => {
     hero.classList.add("hero--no-video");
@@ -76,6 +97,7 @@ async function onSubmit(event) {
   if (!valid) {
     emailInput.setAttribute("aria-invalid", "true");
     setStatus(INVALID_MSG, true);
+    emailInput.focus();
     return;
   }
 
@@ -94,6 +116,7 @@ async function onSubmit(event) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
         "X-CSRFToken": getCsrfToken(),
       },
       body: JSON.stringify(payload),
@@ -109,11 +132,13 @@ async function onSubmit(event) {
 
     if (res.status === 429) {
       setStatus((data && data.message) || FAIL_MSG, true);
+      emailInput.focus();
       return;
     }
 
     if (!res.ok) {
       setStatus((data && data.message) || FAIL_MSG, true);
+      emailInput.focus();
       return;
     }
 
@@ -121,11 +146,12 @@ async function onSubmit(event) {
     form.reset();
   } catch {
     setStatus(FAIL_MSG, true);
+    emailInput.focus();
   } finally {
     submitBtn.disabled = false;
   }
 }
 
 handleReducedMotion();
-handleVideoFallback();
+initVideo();
 form.addEventListener("submit", onSubmit);

@@ -130,6 +130,40 @@ class SubscribeTests(TestCase):
         ).hexdigest()
         self.assertNotEqual(sub.ip_hash, spoofed)
 
+    def _post_form(self, payload, **extra):
+        return self.client.post(self.url, data=payload, **extra)
+
+    def test_nojs_valid_submit_redirects_subscribed(self):
+        response = self._post_form({"email": "form@example.com"})
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response["Location"], "/?subscribed=1")
+        self.assertEqual(Subscriber.objects.count(), 1)
+        follow = self.client.get("/?subscribed=1")
+        self.assertEqual(follow.status_code, 200)
+        self.assertContains(follow, "Дякуємо!")
+        self.assertContains(follow, 'id="form-status"')
+
+    def test_nojs_invalid_email_redirects_error(self):
+        response = self._post_form({"email": "not-an-email"})
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response["Location"], "/?error=invalid")
+        self.assertEqual(Subscriber.objects.count(), 0)
+        follow = self.client.get("/?error=invalid")
+        self.assertEqual(follow.status_code, 200)
+        self.assertContains(follow, "Будь ласка, введіть коректний e-mail")
+        self.assertContains(follow, "hero__status--error")
+
+    def test_nojs_rate_limit_redirects_error_rate(self):
+        for i in range(5):
+            res = self._post_form({"email": f"form{i}@example.com"})
+            self.assertEqual(res.status_code, 303)
+        response = self._post_form({"email": "overflow-form@example.com"})
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response["Location"], "/?error=rate")
+        follow = self.client.get("/?error=rate")
+        self.assertEqual(follow.status_code, 200)
+        self.assertContains(follow, "Забагато спроб")
+
 
 @override_settings(
     DEBUG=True,

@@ -4,7 +4,7 @@ import json
 from django.conf import settings
 from django.core.cache import cache
 from django.core.validators import EmailValidator
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
@@ -21,10 +21,31 @@ RATE_LIMIT_MSG = "Забагато спроб. Спробуйте пізніше
 RATE_LIMIT_MAX = 5
 RATE_LIMIT_WINDOW = 600  # 10 minutes
 
+FORM_STATUS_BY_QUERY = {
+    "subscribed": (SUCCESS_MSG, False),
+    "invalid": (INVALID_MSG, True),
+    "rate": (RATE_LIMIT_MSG, True),
+}
+
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class IndexView(TemplateView):
     template_name = "index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        params = self.request.GET
+        form_status = ""
+        form_status_error = False
+        if "subscribed" in params and params.get("subscribed") == "1":
+            form_status, form_status_error = FORM_STATUS_BY_QUERY["subscribed"]
+        elif params.get("error") == "invalid":
+            form_status, form_status_error = FORM_STATUS_BY_QUERY["invalid"]
+        elif params.get("error") == "rate":
+            form_status, form_status_error = FORM_STATUS_BY_QUERY["rate"]
+        context["form_status"] = form_status
+        context["form_status_error"] = form_status_error
+        return context
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
@@ -63,6 +84,22 @@ def _parse_body(request):
     return request.POST
 
 
+def _wants_json(request):
+    content_type = request.META.get("CONTENT_TYPE", "")
+    if "application/json" in content_type:
+        return True
+    accept = request.META.get("HTTP_ACCEPT", "")
+    return "application/json" in accept and "text/html" not in accept
+
+
+def _subscribe_response(request, *, ok, message, status=200, redirect_to=None):
+    if _wants_json(request):
+        return JsonResponse({"ok": ok, "message": message}, status=status)
+    response = HttpResponseRedirect(redirect_to or "/")
+    response.status_code = 303
+    return response
+
+
 @require_POST
 def subscribe(request):
     data = _parse_body(request)
@@ -75,28 +112,55 @@ def subscribe(request):
     cache_key = f"subscribe:rl:{ip_hash or 'unknown'}"
     attempts = cache.get(cache_key, 0)
     if attempts >= RATE_LIMIT_MAX:
-        return JsonResponse({"ok": False, "message": RATE_LIMIT_MSG}, status=429)
+        return _subscribe_response(
+            request,
+            ok=False,
+            message=RATE_LIMIT_MSG,
+            status=429,
+            redirect_to="/?error=rate",
+        )
     cache.set(cache_key, attempts + 1, RATE_LIMIT_WINDOW)
 
     if honeypot:
-        return JsonResponse({"ok": True, "message": SUCCESS_MSG})
+        return _subscribe_response(
+            request,
+            ok=True,
+            message=SUCCESS_MSG,
+            redirect_to="/?subscribed=1",
+        )
 
     validator = EmailValidator()
     try:
         validator(email_raw)
     except Exception:
-        return JsonResponse({"ok": False, "message": INVALID_MSG}, status=400)
+        return _subscribe_response(
+            request,
+            ok=False,
+            message=INVALID_MSG,
+            status=400,
+            redirect_to="/?error=invalid",
+        )
 
     email = email_raw.strip().lower()
 
     if Subscriber.objects.filter(email__iexact=email).exists():
-        return JsonResponse({"ok": True, "message": SUCCESS_MSG})
+        return _subscribe_response(
+            request,
+            ok=True,
+            message=SUCCESS_MSG,
+            redirect_to="/?subscribed=1",
+        )
 
     Subscriber.objects.create(
         email=email,
         ip_hash=ip_hash,
     )
-    return JsonResponse({"ok": True, "message": SUCCESS_MSG})
+    return _subscribe_response(
+        request,
+        ok=True,
+        message=SUCCESS_MSG,
+        redirect_to="/?subscribed=1",
+    )
 
 
 def robots_txt(request):

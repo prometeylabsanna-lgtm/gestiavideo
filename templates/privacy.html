@@ -9,9 +9,7 @@
   <title>Політика конфіденційності — Gestia Home</title>
   <link rel="canonical" href="{{ SITE_URL }}/privacy/">
   <link rel="icon" href="{% static 'assets/img/favicon.ico' %}" sizes="any">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&subset=cyrillic&display=swap" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" href="{% static 'assets/fonts/inter-cyrillic.woff2' %}" crossorigin>
   <link rel="stylesheet" href="{% static 'styles.css' %}">
   <link rel="stylesheet" href="{% static 'privacy.css' %}">
 </head>
@@ -19,10 +17,10 @@
   <main class="page__main">
     <a class="page__brand" href="/">
       <img
-        src="{% static 'assets/img/logo.png' %}"
+        src="{% static 'assets/img/logo.webp' %}"
         alt="Gestia Home"
-        width="140"
-        height="54"
+        width="280"
+        height="108"
       >
     </a>
 
