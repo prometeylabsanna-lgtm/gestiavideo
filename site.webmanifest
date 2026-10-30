@@ -1,0 +1,21 @@
+{
+  "name": "Gestia Home",
+  "short_name": "Gestia Home",
+  "start_url": "/",
+  "display": "browser",
+  "lang": "uk",
+  "theme_color": "#251008",
+  "background_color": "#251008",
+  "icons": [
+    {
+      "src": "/assets/img/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/img/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
