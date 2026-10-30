@@ -8,6 +8,8 @@ from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
+from config.csp import CSP_ADMIN, CSP_HEADER, CSP_STRICT
+
 from .models import Subscriber
 from .views import (
     EMAIL_MAX_LENGTH,
@@ -334,3 +336,24 @@ class AdminExportTests(TestCase):
         body = response.content.decode("utf-8-sig")
         self.assertIn("email", body)
         self.assertIn("export@example.com", body)
+
+
+@override_settings(
+    DEBUG=True,
+    ADMIN_URL="admin-local/",
+    SECURE_SSL_REDIRECT=False,
+)
+class ContentSecurityPolicyTests(TestCase):
+    def test_home_has_strict_csp(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response[CSP_HEADER], CSP_STRICT)
+        self.assertNotIn("unsafe-inline", response[CSP_HEADER])
+        self.assertNotIn("unsafe-eval", response[CSP_HEADER])
+
+    def test_admin_login_has_relaxed_csp(self):
+        response = self.client.get(f"/{settings.ADMIN_URL}login/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response[CSP_HEADER], CSP_ADMIN)
+        self.assertIn("unsafe-inline", response[CSP_HEADER])
+        self.assertIn("unsafe-eval", response[CSP_HEADER])

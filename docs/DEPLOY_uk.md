@@ -72,15 +72,22 @@ docker compose -f docker-compose.prod.yml run --rm certbot certonly \
   --email YOUR@EMAIL --agree-tos --no-eff-email
 ```
 
-Потім у `nginx/conf.d/gestia.conf`:
-
-1. Розкоментуйте блок `listen 443 ssl http2` (SSL-шаблон уже з security headers, CSP, HSTS, `limit_req` на `/subscribe/`).
-2. У блоці `listen 80` розкоментуйте `return 301 https://$host$request_uri;` і **приберіть** (закоментуйте) proxy-локації `/` та `/subscribe/`, залишивши лише `/.well-known/acme-challenge/`.
-3. Перезавантажте nginx:
+Після видачі сертифікатів увімкніть фінальний SSL-конфіг:
 
 ```bash
+cp nginx/gestia.ssl.conf nginx/conf.d/gestia.conf
 docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 ```
+
+`nginx/gestia.ssl.conf` — активний прод-шаблон: порт 80 лише ACME + 301→HTTPS; порт 443 з SSL, `limit_req` на `/subscribe/`, `server_tokens off`, gzip, nosniff/referrer/permissions. CSP, HSTS і `X-Frame-Options` віддає **Django** (не nginx).
+
+**Важливо:** після `cp` файл `nginx/conf.d/gestia.conf` на сервері відрізняється від git. Щоб `git pull` / `checkout` його не перезаписували:
+
+```bash
+git update-index --skip-worktree nginx/conf.d/gestia.conf
+```
+
+(Не використовуйте `git stash` / `checkout --` на цей файл, якщо там уже SSL-конфіг.)
 
 Після успішного SSL у `.env` встановіть `SECURE_SSL_REDIRECT=1` і перезапустіть web:
 
@@ -88,11 +95,25 @@ docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 docker compose -f docker-compose.prod.yml up -d --force-recreate web
 ```
 
-Перевірка: `curl -I http://gestia-home.com/` має дати `301` на HTTPS; на 443 — заголовки CSP / HSTS / `nosniff`.
+Перевірка: `curl -I http://gestia-home.com/` має дати `301` на HTTPS; на 443 — `nosniff` (nginx) і CSP / HSTS (Django).
+
+### Cron: оновлення сертифіката
+
+```cron
+# Щодня о 03:40 — renew + reload nginx
+40 3 * * * cd /path/to/gestia && docker compose -f docker-compose.prod.yml run --rm certbot renew --webroot -w /var/www/certbot && docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload >> /var/log/gestia-certbot.log 2>&1
+```
+
+Альтернатива (окремі рядки):
+
+```cron
+40 3 * * * cd /path/to/gestia && docker compose -f docker-compose.prod.yml run --rm certbot renew --webroot -w /var/www/certbot >> /var/log/gestia-certbot.log 2>&1
+45 3 * * * cd /path/to/gestia && docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload >> /var/log/gestia-nginx-reload.log 2>&1
+```
 
 ## 6. HSTS
 
-У проді Django за замовчуванням ставить `SECURE_HSTS_SECONDS=31536000` (можна перевизначити env). Nginx на 443 також віддає HSTS. Не вмикайте HSTS, доки HTTPS не працює стабільно для обох імен хоста.
+У проді Django за замовчуванням ставить `SECURE_HSTS_SECONDS=31536000` (можна перевизначити env). Nginx HSTS **не** дублює. Не вмикайте HSTS, доки HTTPS не працює стабільно для обох імен хоста.
 
 ## 7. Бекап Postgres
 
@@ -126,6 +147,8 @@ gunzip -c /var/backups/gestia/gestia_YYYYMMDD_HHMMSS.sql.gz \
 Перед restore зупиніть `web` або переконайтесь, що немає активних записів у БД. Після відновлення: `docker compose -f docker-compose.prod.yml restart web`.
 
 ## 8. Оновлення
+
+Якщо після SSL увімкнено `skip-worktree` для `nginx/conf.d/gestia.conf`, `git pull` не перезапише локальний SSL-конфіг на сервері.
 
 ```bash
 git pull
