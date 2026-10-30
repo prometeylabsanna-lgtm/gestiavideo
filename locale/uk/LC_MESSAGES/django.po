@@ -24,16 +24,25 @@ msgstr "спроба доступу"
 msgid "access attempts"
 msgstr "Спроби доступу"
 
+msgid "Access attempts"
+msgstr "Спроби доступу"
+
 msgid "access failure"
 msgstr "невдала спроба"
 
 msgid "access failures"
 msgstr "Невдалі спроби"
 
+msgid "Access failures"
+msgstr "Невдалі спроби"
+
 msgid "access log"
 msgstr "запис доступу"
 
 msgid "access logs"
+msgstr "Журнали доступу"
+
+msgid "Access logs"
 msgstr "Журнали доступу"
 
 msgid "access attempt expiration"

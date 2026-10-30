@@ -337,6 +337,14 @@ class AdminExportTests(TestCase):
         self.assertIn("email", body)
         self.assertIn("export@example.com", body)
 
+    def test_admin_changelist_uk_ignores_accept_language_en(self):
+        url = reverse("admin:subscribers_subscriber_changelist")
+        response = self.client.get(url, HTTP_ACCEPT_LANGUAGE="en")
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertNotIn("Type to search", body)
+        self.assertNotIn("Filters", body)
+
 
 @override_settings(
     DEBUG=True,
