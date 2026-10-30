@@ -187,3 +187,34 @@ def sitemap_xml(request):
         "</urlset>\n"
     )
     return HttpResponse(body, content_type="application/xml")
+
+
+def site_webmanifest(request):
+    static = settings.STATIC_URL
+    if not static.endswith("/"):
+        static = f"{static}/"
+    payload = {
+        "name": "Gestia Home",
+        "short_name": "Gestia Home",
+        "start_url": "/",
+        "display": "browser",
+        "lang": "uk",
+        "theme_color": "#251008",
+        "background_color": "#251008",
+        "icons": [
+            {
+                "src": f"{static}assets/img/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+            },
+            {
+                "src": f"{static}assets/img/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+            },
+        ],
+    }
+    return HttpResponse(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        content_type="application/manifest+json",
+    )

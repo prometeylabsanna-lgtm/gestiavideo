@@ -4,7 +4,13 @@ from django.http import HttpResponse
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from subscribers.views import IndexView, PrivacyView, robots_txt, sitemap_xml
+from subscribers.views import (
+    IndexView,
+    PrivacyView,
+    robots_txt,
+    site_webmanifest,
+    sitemap_xml,
+)
 
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
@@ -13,6 +19,7 @@ urlpatterns = [
     path("", include("subscribers.urls")),
     path("robots.txt", robots_txt, name="robots_txt"),
     path("sitemap.xml", sitemap_xml, name="sitemap_xml"),
+    path("site.webmanifest", site_webmanifest, name="site_webmanifest"),
     path(
         "favicon.ico",
         RedirectView.as_view(

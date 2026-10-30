@@ -25,6 +25,50 @@ class IndexTests(TestCase):
         self.assertContains(response, 'href="/privacy/"')
         self.assertContains(response, "політикою конфіденційності")
 
+    def test_json_ld_present(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'type="application/ld+json"')
+        self.assertContains(response, '"@type": "Organization"')
+        self.assertContains(response, '"@type": "WebSite"')
+        self.assertContains(response, "https://gestia-home.com/#organization")
+        self.assertContains(response, "/static/assets/img/icon-512.png")
+        self.assertContains(response, 'rel="manifest" href="/site.webmanifest"')
+
+
+@override_settings(
+    DEBUG=True,
+    ADMIN_URL="admin-local/",
+    SECURE_SSL_REDIRECT=False,
+)
+class SeoEndpointsTests(TestCase):
+    def test_sitemap_xml(self):
+        response = self.client.get("/sitemap.xml")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("xml", response["Content-Type"])
+        body = response.content.decode()
+        self.assertIn("https://gestia-home.com/", body)
+        self.assertIn("https://gestia-home.com/privacy/", body)
+        self.assertNotIn("admin", body.lower())
+
+    def test_site_webmanifest(self):
+        response = self.client.get("/site.webmanifest")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("manifest", response["Content-Type"])
+        data = response.json()
+        self.assertEqual(data["name"], "Gestia Home")
+        srcs = {icon["src"] for icon in data["icons"]}
+        self.assertIn("/static/assets/img/icon-192.png", srcs)
+        self.assertIn("/static/assets/img/icon-512.png", srcs)
+
+    def test_robots_txt_has_sitemap(self):
+        response = self.client.get("/robots.txt")
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn("Allow: /", body)
+        self.assertIn("Sitemap: https://gestia-home.com/sitemap.xml", body)
+        self.assertNotIn("admin", body.lower())
+
 
 @override_settings(
     DEBUG=True,
