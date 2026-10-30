@@ -1,0 +1,216 @@
+# Gestia Home — Ukrainian overrides for admin UI (Unfold + django-axes).
+msgid ""
+msgstr ""
+"Project-Id-Version: Gestia Home\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-30 17:00+0200\n"
+"PO-Revision-Date: 2026-10-30 17:00+0200\n"
+"Last-Translator: Gestia\n"
+"Language-Team: Ukrainian\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+# --- django-axes app & models ---
+msgid "Axes"
+msgstr "Захист входу"
+
+msgid "access attempt"
+msgstr "спроба доступу"
+
+msgid "access attempts"
+msgstr "Спроби доступу"
+
+msgid "access failure"
+msgstr "невдала спроба"
+
+msgid "access failures"
+msgstr "Невдалі спроби"
+
+msgid "access log"
+msgstr "запис доступу"
+
+msgid "access logs"
+msgstr "Журнали доступу"
+
+msgid "access attempt expiration"
+msgstr "термін спроби доступу"
+
+msgid "access attempt expirations"
+msgstr "Терміни спроб доступу"
+
+msgid "User Agent"
+msgstr "User-Agent"
+
+msgid "IP Address"
+msgstr "IP-адреса"
+
+msgid "Username"
+msgstr "Імʼя користувача"
+
+msgid "HTTP Accept"
+msgstr "HTTP Accept"
+
+msgid "Path"
+msgstr "Шлях"
+
+msgid "Attempt Time"
+msgstr "Час спроби"
+
+msgid "Access lock out"
+msgstr "Блокування доступу"
+
+msgid "GET Data"
+msgstr "Дані GET"
+
+msgid "POST Data"
+msgstr "Дані POST"
+
+msgid "Failed Logins"
+msgstr "Невдалі входи"
+
+msgid "Logout Time"
+msgstr "Час виходу"
+
+msgid "Access Attempt"
+msgstr "Спроба доступу"
+
+msgid "Expires At"
+msgstr "Дійсне до"
+
+msgid "The time when access attempt expires and is no longer valid."
+msgstr "Час, після якого спроба доступу вважається недійсною."
+
+msgid "Session key hash (sha256)"
+msgstr "Хеш ключа сесії (sha256)"
+
+msgid "Form Data"
+msgstr "Дані форми"
+
+msgid "Meta Data"
+msgstr "Метадані"
+
+msgid "Account locked: too many login attempts. Please try again later."
+msgstr ""
+"Обліковий запис заблоковано: забагато спроб входу. Спробуйте пізніше."
+
+msgid ""
+"Account locked: too many login attempts. Contact an admin to unlock your "
+"account."
+msgstr ""
+"Обліковий запис заблоковано: забагато спроб входу. Зверніться до "
+"адміністратора для розблокування."
+
+# --- Unfold UI (common remaining English) ---
+msgid "Type to search"
+msgstr "Введіть для пошуку"
+
+msgid "Filters"
+msgstr "Фільтри"
+
+msgid "Apply Filters"
+msgstr "Застосувати фільтри"
+
+msgid "Clear all filters"
+msgstr "Очистити всі фільтри"
+
+msgid "Reset filters"
+msgstr "Скинути фільтри"
+
+msgid "All applications"
+msgstr "Усі додатки"
+
+msgid "Filter navigation items"
+msgstr "Фільтр пунктів навігації"
+
+msgid "Search apps and models..."
+msgstr "Пошук додатків і моделей…"
+
+msgid "No results found"
+msgstr "Нічого не знайдено"
+
+msgid "No results matching your query"
+msgstr "Немає результатів за вашим запитом"
+
+msgid "No recent searches"
+msgstr "Немає недавніх пошуків"
+
+msgid "Recent searches"
+msgstr "Недавні пошуки"
+
+msgid "Recent actions"
+msgstr "Недавні дії"
+
+msgid "More actions"
+msgstr "Більше дій"
+
+msgid "Select action"
+msgstr "Оберіть дію"
+
+msgid "Select action to run"
+msgstr "Оберіть дію для виконання"
+
+msgid "Run the selected action"
+msgstr "Виконати вибрану дію"
+
+msgid "Select all objects on this page for an action"
+msgstr "Вибрати всі обʼєкти на цій сторінці для дії"
+
+msgid "Select all rows"
+msgstr "Вибрати всі рядки"
+
+msgid "Clear selection"
+msgstr "Очистити вибір"
+
+msgid "Show all"
+msgstr "Показати все"
+
+msgid "Show counts"
+msgstr "Показати кількість"
+
+msgid "Hide counts"
+msgstr "Сховати кількість"
+
+msgid "Add new item"
+msgstr "Додати новий елемент"
+
+msgid "This page yielded into no results. Create a new item or reset your filters."
+msgstr ""
+"На цій сторінці немає результатів. Створіть новий елемент або скиньте "
+"фільтри."
+
+msgid "Return to site"
+msgstr "Повернутися на сайт"
+
+msgid "View site"
+msgstr "Переглянути сайт"
+
+msgid "Welcome back to"
+msgstr "З поверненням до"
+
+msgid "You have been successfully logged out from the administration"
+msgstr "Ви успішно вийшли з адміністративної панелі"
+
+msgid "Home"
+msgstr "Головна"
+
+msgid "Dark"
+msgstr "Темна"
+
+msgid "Light"
+msgstr "Світла"
+
+msgid "System"
+msgstr "Системна"
+
+msgid "Close"
+msgstr "Закрити"
+
+msgid "Action"
+msgstr "Дія"
+
+msgid "Run"
+msgstr "Виконати"

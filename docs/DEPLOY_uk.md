@@ -2,6 +2,8 @@
 
 Покрокова інструкція для власника. **Ніколи не публікуйте** `SECRET_KEY`, паролі БД і шлях адмінки.
 
+На сервері використовуйте **лише** `docker-compose.prod.yml` (`docker compose -f docker-compose.prod.yml …`). Файл `docker-compose.yml` — лише для локальної розробки; на прод його не запускайте.
+
 ## 1. Сервер
 
 1. Створіть Droplet у DigitalOcean: Ubuntu 24.04, мінімум 1 GB RAM.
@@ -38,13 +40,15 @@ python3 -c "import secrets; print(secrets.token_urlsafe(50))"
 - `IP_HASH_SALT` — випадковий рядок (**обовʼязково** в проді)
 - `POSTGRES_PASSWORD` і відповідний пароль у `DATABASE_URL`
 - `DEBUG=0`
+- `SECURE_SSL_REDIRECT=0` на **першому HTTP-only** запуску (до certbot). Інакше Django редиректить на неіснуючий HTTPS
 - `SECURE_HSTS_SECONDS=31536000` (після того як HTTPS стабільно працює; можна змінити через env)
 
 Без `SECRET_KEY` / `IP_HASH_SALT` / `ADMIN_URL` при `DEBUG=0` застосунок **не стартує**.
 
-## 4. Запуск
+## 4. Запуск (HTTP-only, до SSL)
 
 ```bash
+# у .env: SECURE_SSL_REDIRECT=0
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
@@ -78,6 +82,12 @@ docker compose -f docker-compose.prod.yml run --rm certbot certonly \
 docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 ```
 
+Після успішного SSL у `.env` встановіть `SECURE_SSL_REDIRECT=1` і перезапустіть web:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --force-recreate web
+```
+
 Перевірка: `curl -I http://gestia-home.com/` має дати `301` на HTTPS; на 443 — заголовки CSP / HSTS / `nosniff`.
 
 ## 6. HSTS
@@ -103,7 +113,7 @@ Cron (щодня о 03:15, з каталогу проєкту):
 15 3 * * * cd /path/to/gestia && ./scripts/backup_db.sh >> /var/log/gestia-backup.log 2>&1
 ```
 
-Рекомендовано копіювати `.sql.gz` ще й offsite (DO Spaces / інший сервер).
+**Обовʼязково** копіюйте бекапи **поза сервер** (не лише `/var/backups/gestia/` на тому ж дроплеті): наприклад DO Spaces / rclone, або `rsync` на іншу машину. Без offsite втрата диска = втрата даних.
 
 ### Відновлення з бекапу
 

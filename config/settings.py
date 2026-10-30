@@ -4,6 +4,9 @@ from pathlib import Path
 
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -70,7 +73,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "axes",
+    "config.axes_config.AxesConfig",
     "subscribers",
 ]
 
@@ -78,6 +81,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -139,6 +143,7 @@ LANGUAGE_CODE = "uk"
 TIME_ZONE = "Europe/Kyiv"
 USE_I18N = True
 USE_TZ = True
+LOCALE_PATHS = [BASE_DIR / "locale"]
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -162,6 +167,66 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 UNFOLD = {
     "SITE_TITLE": "Gestia Home",
     "SITE_HEADER": "Gestia Home",
+    "SITE_ICON": {
+        "light": lambda request: static("assets/img/favicon.png"),
+        "dark": lambda request: static("assets/img/favicon.png"),
+    },
+    "SITE_FAVICONS": [
+        {
+            "rel": "icon",
+            "sizes": "any",
+            "href": lambda request: static("assets/img/favicon.ico"),
+        },
+        {
+            "rel": "icon",
+            "type": "image/png",
+            "href": lambda request: static("assets/img/favicon.png"),
+        },
+        {
+            "rel": "apple-touch-icon",
+            "href": lambda request: static("assets/img/apple-touch-icon.png"),
+        },
+    ],
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": _("Навігація"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Підписники"),
+                        "icon": "mail",
+                        "link": reverse_lazy(
+                            "admin:subscribers_subscriber_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Спроби доступу"),
+                        "icon": "gpp_maybe",
+                        "link": reverse_lazy(
+                            "admin:axes_accessattempt_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Невдалі спроби"),
+                        "icon": "report",
+                        "link": reverse_lazy(
+                            "admin:axes_accessfailurelog_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Журнали доступу"),
+                        "icon": "history",
+                        "link": reverse_lazy(
+                            "admin:axes_accesslog_changelist"
+                        ),
+                    },
+                ],
+            },
+        ],
+    },
 }
 
 if RUNNING_TESTS:

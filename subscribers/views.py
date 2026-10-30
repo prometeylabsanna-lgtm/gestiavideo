@@ -1,7 +1,9 @@
 import hashlib
 import json
+import time
 
 from django.conf import settings
+from django.core import signing
 from django.core.cache import cache
 from django.core.validators import EmailValidator
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -21,11 +23,50 @@ RATE_LIMIT_MSG = "Забагато спроб. Спробуйте пізніше
 RATE_LIMIT_MAX = 5
 RATE_LIMIT_WINDOW = 600  # 10 minutes
 
+EMAIL_MAX_LENGTH = 254
+
+FORM_TS_SALT = "subscribe-form-ts"
+FORM_TS_MAX_AGE = 86400  # 1 day
+FORM_TS_MIN_AGE = 2  # seconds — reject faster submissions as bots
+
 FORM_STATUS_BY_QUERY = {
     "subscribed": (SUCCESS_MSG, False),
     "invalid": (INVALID_MSG, True),
     "rate": (RATE_LIMIT_MSG, True),
 }
+
+
+def make_form_ts(now=None):
+    """Signed timestamp for the waitlist form time-trap (no-JS safe)."""
+    ts = time.time() if now is None else float(now)
+    return signing.dumps({"t": ts}, salt=FORM_TS_SALT)
+
+
+def form_ts_ok(token):
+    """
+    True if signature is valid and payload age is in [MIN_AGE, MAX_AGE].
+    Missing / invalid / too-fast / older than 1 day → False (silent success).
+    """
+    if not token:
+        return False
+    try:
+        # TimestampSigner max_age also rejects tokens re-signed long ago.
+        data = signing.loads(
+            token, salt=FORM_TS_SALT, max_age=FORM_TS_MAX_AGE
+        )
+        rendered_at = float(data["t"])
+    except (
+        signing.BadSignature,
+        signing.SignatureExpired,
+        KeyError,
+        TypeError,
+        ValueError,
+    ):
+        return False
+    age = time.time() - rendered_at
+    if age < FORM_TS_MIN_AGE or age > FORM_TS_MAX_AGE:
+        return False
+    return True
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
@@ -45,6 +86,7 @@ class IndexView(TemplateView):
             form_status, form_status_error = FORM_STATUS_BY_QUERY["rate"]
         context["form_status"] = form_status
         context["form_status_error"] = form_status_error
+        context["form_ts"] = make_form_ts()
         return context
 
 
@@ -100,11 +142,21 @@ def _subscribe_response(request, *, ok, message, status=200, redirect_to=None):
     return response
 
 
+def _silent_success(request):
+    return _subscribe_response(
+        request,
+        ok=True,
+        message=SUCCESS_MSG,
+        redirect_to="/?subscribed=1",
+    )
+
+
 @require_POST
 def subscribe(request):
     data = _parse_body(request)
     email_raw = (data.get("email") or "").strip()
     honeypot = (data.get("website") or "").strip()
+    form_ts = (data.get("form_ts") or "").strip()
 
     ip = _client_ip(request)
     ip_hash = _ip_hash(ip) if ip else ""
@@ -122,11 +174,18 @@ def subscribe(request):
     cache.set(cache_key, attempts + 1, RATE_LIMIT_WINDOW)
 
     if honeypot:
+        return _silent_success(request)
+
+    if not form_ts_ok(form_ts):
+        return _silent_success(request)
+
+    if len(email_raw) > EMAIL_MAX_LENGTH:
         return _subscribe_response(
             request,
-            ok=True,
-            message=SUCCESS_MSG,
-            redirect_to="/?subscribed=1",
+            ok=False,
+            message=INVALID_MSG,
+            status=400,
+            redirect_to="/?error=invalid",
         )
 
     validator = EmailValidator()
@@ -144,23 +203,13 @@ def subscribe(request):
     email = email_raw.strip().lower()
 
     if Subscriber.objects.filter(email__iexact=email).exists():
-        return _subscribe_response(
-            request,
-            ok=True,
-            message=SUCCESS_MSG,
-            redirect_to="/?subscribed=1",
-        )
+        return _silent_success(request)
 
     Subscriber.objects.create(
         email=email,
         ip_hash=ip_hash,
     )
-    return _subscribe_response(
-        request,
-        ok=True,
-        message=SUCCESS_MSG,
-        redirect_to="/?subscribed=1",
-    )
+    return _silent_success(request)
 
 
 def robots_txt(request):

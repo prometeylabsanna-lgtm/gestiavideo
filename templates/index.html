@@ -28,7 +28,7 @@
   <meta name="twitter:image" content="{{ SITE_URL }}{% static 'assets/img/og-image.jpg' %}">
 
   <link rel="icon" href="{% static 'assets/img/favicon.ico' %}" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'assets/img/favicon-32.png' %}">
+  <link rel="icon" href="{% static 'assets/img/favicon.png' %}" type="image/png">
   <link rel="apple-touch-icon" href="{% static 'assets/img/apple-touch-icon.png' %}">
   <link rel="manifest" href="/site.webmanifest">
 
@@ -102,6 +102,7 @@
 
           <form class="hero__form" id="waitlist-form" data-qa="waitlist-form" action="/subscribe/" method="post" novalidate>
             {% csrf_token %}
+            <input type="hidden" name="form_ts" id="form_ts" value="{{ form_ts }}">
             <div class="hero__field">
               <label class="visually-hidden" for="email">E-mail</label>
               <input
@@ -110,6 +111,7 @@
                 name="email"
                 data-qa="email"
                 required
+                maxlength="254"
                 autocomplete="email"
                 placeholder="Введіть ваш e-mail"
                 aria-describedby="form-status"

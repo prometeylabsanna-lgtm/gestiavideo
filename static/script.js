@@ -106,9 +106,11 @@ async function onSubmit(event) {
 
   const endpoint = form.getAttribute("action") || FORM_ENDPOINT;
   const websiteInput = form.querySelector('input[name="website"]');
+  const formTsInput = form.querySelector('input[name="form_ts"]');
   const payload = {
     email,
     website: websiteInput ? websiteInput.value : "",
+    form_ts: formTsInput ? formTsInput.value : "",
   };
 
   try {

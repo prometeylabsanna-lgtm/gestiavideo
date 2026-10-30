@@ -1,4 +1,6 @@
 import hashlib
+import time
+from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -7,6 +9,21 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from .models import Subscriber
+from .views import (
+    EMAIL_MAX_LENGTH,
+    FORM_TS_MAX_AGE,
+    FORM_TS_MIN_AGE,
+    make_form_ts,
+)
+
+
+def _aged_form_ts(age_seconds):
+    """Signed form_ts as if the page was rendered `age_seconds` ago."""
+    return make_form_ts(now=time.time() - age_seconds)
+
+
+def _valid_form_ts():
+    return _aged_form_ts(FORM_TS_MIN_AGE + 1)
 
 
 @override_settings(
@@ -22,6 +39,8 @@ class IndexTests(TestCase):
         self.assertContains(response, 'rel="canonical"')
         self.assertContains(response, "https://gestia-home.com/")
         self.assertContains(response, 'name="website"')
+        self.assertContains(response, 'name="form_ts"')
+        self.assertContains(response, 'maxlength="254"')
         self.assertContains(response, 'href="/privacy/"')
         self.assertContains(response, "політикою конфіденційності")
 
@@ -94,11 +113,18 @@ class SubscribeTests(TestCase):
     def setUp(self):
         cache.clear()
         self.url = reverse("subscribe")
+        self.form_ts = _valid_form_ts()
+
+    def _payload(self, extra=None):
+        data = {"form_ts": self.form_ts}
+        if extra:
+            data.update(extra)
+        return data
 
     def _post_json(self, payload, **extra):
         return self.client.post(
             self.url,
-            data=payload,
+            data=self._payload(payload),
             content_type="application/json",
             **extra,
         )
@@ -128,6 +154,15 @@ class SubscribeTests(TestCase):
         self.assertIn("e-mail", data["message"].lower())
         self.assertEqual(Subscriber.objects.count(), 0)
 
+    def test_email_longer_than_254_rejected(self):
+        local = "a" * (EMAIL_MAX_LENGTH - len("@example.com") + 1)
+        email = f"{local}@example.com"
+        self.assertGreater(len(email), EMAIL_MAX_LENGTH)
+        response = self._post_json({"email": email})
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["ok"])
+        self.assertEqual(Subscriber.objects.count(), 0)
+
     def test_honeypot_200_no_rows(self):
         response = self._post_json(
             {"email": "bot@example.com", "website": "http://spam.test"}
@@ -135,6 +170,63 @@ class SubscribeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["ok"])
         self.assertEqual(Subscriber.objects.count(), 0)
+
+    def test_time_trap_too_fast_silent_success(self):
+        fast_ts = _aged_form_ts(0)
+        response = self.client.post(
+            self.url,
+            data={"email": "fast@example.com", "form_ts": fast_ts},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertEqual(Subscriber.objects.count(), 0)
+
+    def test_time_trap_missing_silent_success(self):
+        response = self.client.post(
+            self.url,
+            data={"email": "missing-ts@example.com"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertEqual(Subscriber.objects.count(), 0)
+
+    def test_time_trap_invalid_signature_silent_success(self):
+        response = self.client.post(
+            self.url,
+            data={"email": "bad-sig@example.com", "form_ts": "not-a-valid-token"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertEqual(Subscriber.objects.count(), 0)
+
+    def test_time_trap_expired_silent_success(self):
+        expired = _aged_form_ts(FORM_TS_MAX_AGE + 10)
+        response = self.client.post(
+            self.url,
+            data={"email": "old@example.com", "form_ts": expired},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertEqual(Subscriber.objects.count(), 0)
+
+    @patch("subscribers.views.time.time")
+    def test_time_trap_valid_after_min_age_with_freeze(self, mock_time):
+        rendered = 1_700_000_000.0
+        mock_time.return_value = rendered
+        token = make_form_ts()
+        mock_time.return_value = rendered + FORM_TS_MIN_AGE + 1
+        response = self.client.post(
+            self.url,
+            data={"email": "ok-trap@example.com", "form_ts": token},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertEqual(Subscriber.objects.count(), 1)
 
     def test_rate_limit_429(self):
         for i in range(5):
@@ -175,7 +267,7 @@ class SubscribeTests(TestCase):
         self.assertNotEqual(sub.ip_hash, spoofed)
 
     def _post_form(self, payload, **extra):
-        return self.client.post(self.url, data=payload, **extra)
+        return self.client.post(self.url, data=self._payload(payload), **extra)
 
     def test_nojs_valid_submit_redirects_subscribed(self):
         response = self._post_form({"email": "form@example.com"})
