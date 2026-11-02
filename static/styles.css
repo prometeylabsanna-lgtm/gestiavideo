@@ -148,6 +148,11 @@ body {
   max-width: 100%;
 }
 
+.hero__desc p.hero__lead {
+  width: 598px;
+  max-width: calc(100vw - 32px);
+}
+
 .hero__desc p {
   font-family: Inter, system-ui, sans-serif;
   font-weight: 500;
@@ -225,7 +230,7 @@ body {
 
 .hero__field button {
   flex-shrink: 0;
-  width: 257px;
+  width: 292px;
   height: 44px;
   padding: 12px 16px;
   border: none;

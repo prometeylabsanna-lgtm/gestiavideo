@@ -14,15 +14,15 @@ assets/video/bg.mp4 (H.264, no audio), bg.webm (VP9), poster.jpg, poster.webp.
   - Text group: flex column, align center, gap 40px.
     - H1: "Твоє ідеальне свято вже майже у коробці…" Inter Regular 400, 60px, line-height 1 (100%), letter-spacing -4.2px (-0.07em), color #FEEDDA, text-align center. Wraps to 2 lines at 680px ("Твоє ідеальне свято вже / майже у коробці…").
     - Description block: width 551px (max-width 100%), flex column, align center, gap 14px:
-      p1: "Ми вже збираємо свіжу хвою до святкових боксів Gestia Home, щоб ти могла легко своїми руками декорувати новорічний стіл"
+      p1: "Жива хвоя, дизайнерські свічки, вишуканий декор та детальний майстер-клас — усе, щоб ти власноруч прикрасила святковий стіл"
       divider: <img src="assets/img/divider-1.svg" width="140" height="1" alt="">  (line #FEEDDA 50% opacity)
       p2: "Ще трішки — і мистецтво гостинності стане частиною твоїх сімейних традицій!"
       divider: <img src="assets/img/divider-2.svg" width="70.5" height="1" alt="">
-      p3: "Не пропусти старт продажів — залиш свій email та дізнайся першою, коли святкові бокси стануть доступними!"
+      p3: "Залиш свій email зараз, щоб першою дізнатися про старт передзамовлень та придбати свій святковий бокс зі знижкою 5%"
       Paragraph style: Inter Medium 500, 18px, line-height normal (~1.21, each p is 44px tall = 2 lines), letter-spacing -0.54px (-0.03em), color #FEEDDA, centered.
     - Form (Figma "Input Field"): width 636px (max-width 100%), height 44px, border 1px solid #D4B99F, background transparent, padding-left 18px, display flex, align center, justify space-between. Gap 40px above (from group gap).
       - input type=email name=email required autocomplete=email, placeholder "Введіть ваш e-mail"; Inter Medium 500 16px, letter-spacing -0.48px, color #FEEDDA, placeholder color #FEEDDA (opacity 1), transparent bg, no border, flex:1. Visually-hidden <label> "E-mail".
-      - button type=submit: width 257px, height 44px (button fills right edge inside border), background linear-gradient(to right, #D4B99F, #754C28), text "Дізнатись першою" Inter Regular 400 16px, letter-spacing -0.48px, color #FEEDDA, no border, no radius (radius 0 everywhere), padding 12px 16px. Hover: slight brightness(1.08); focus-visible outline 2px #FEEDDA offset 2px. Input focus: border color #FEEDDA on the field wrapper (:focus-within).
+      - button type=submit: width 292px, height 44px (button fills right edge inside border), background linear-gradient(to right, #D4B99F, #754C28), text "ЗАБРОНЮВАТИ ЗНИЖКУ 5%" Inter Regular 400 16px, letter-spacing -0.48px, color #FEEDDA, no border, no radius (radius 0 everywhere), padding 12px 16px. Hover: slight brightness(1.08); focus-visible outline 2px #FEEDDA offset 2px. Input focus: border color #FEEDDA on the field wrapper (:focus-within).
       - Below form: a status line (role="status" aria-live="polite"), Inter 14px, #FEEDDA; error color #F2B8A0.
 - Colors/tokens as CSS custom props: --cream #FEEDDA; --cream-50 rgba(254,237,218,.5); --sand #D4B99F; --brown #754C28; --overlay rgba(37,16,8,.2); --dark #251008.
 - Fonts: Inter 400 and 500 with cyrillic subset via Google Fonts (preconnect + display=swap). Font stack Inter, system-ui, sans-serif.

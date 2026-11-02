@@ -93,11 +93,11 @@
           <h1 class="hero__title">Твоє ідеальне свято вже майже у коробці…</h1>
 
           <div class="hero__desc">
-            <p>Ми вже збираємо свіжу хвою до святкових боксів Gestia Home, щоб ти могла легко своїми руками декорувати новорічний стіл</p>
+            <p class="hero__lead">Жива хвоя, дизайнерські свічки, вишуканий декор та детальний майстер-клас — усе, щоб ти власноруч прикрасила святковий стіл</p>
             <img class="hero__divider hero__divider--1" src="{% static 'assets/img/divider-1.svg' %}" width="139" height="1" alt="">
             <p>Ще трішки — і мистецтво гостинності стане частиною твоїх сімейних традицій!</p>
             <img class="hero__divider hero__divider--2" src="{% static 'assets/img/divider-2.svg' %}" width="69.5" height="1" alt="">
-            <p>Не пропусти старт продажів — залиш свій email та дізнайся першою, коли святкові бокси стануть доступними!</p>
+            <p>Залиш свій email зараз, щоб першою дізнатися про старт передзамовлень та придбати свій святковий бокс зі знижкою 5%</p>
           </div>
 
           <form class="hero__form" id="waitlist-form" data-qa="waitlist-form" action="/subscribe/" method="post" novalidate>
@@ -127,7 +127,7 @@
                   autocomplete="off"
                 >
               </div>
-              <button type="submit" data-qa="submit">Дізнатись першою</button>
+              <button type="submit" data-qa="submit">ЗАБРОНЮВАТИ ЗНИЖКУ 5%</button>
             </div>
             <p
               class="hero__status{% if form_status_error %} hero__status--error{% endif %}"
