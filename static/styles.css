@@ -213,9 +213,16 @@ body {
   appearance: none;
 }
 
+.hero__field input:focus,
 .hero__field input:focus-visible {
-  outline: 2px solid #FEEDDA;
-  outline-offset: 2px;
+  outline: none;
+}
+
+.hero__field input:-webkit-autofill,
+.hero__field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--cream);
+  -webkit-box-shadow: 0 0 0 1000px transparent inset;
+  transition: background-color 9999s ease-out 0s;
 }
 
 .hero__field input::placeholder {
@@ -252,8 +259,8 @@ body {
 }
 
 .hero__field button:focus-visible {
-  outline: 2px solid var(--cream);
-  outline-offset: 2px;
+  outline: 1px solid var(--cream);
+  outline-offset: -4px;
 }
 
 .hero__field button:disabled {
