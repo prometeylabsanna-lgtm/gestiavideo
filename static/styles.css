@@ -153,6 +153,11 @@ body {
   max-width: calc(100vw - 32px);
 }
 
+.hero__desc p.hero__cta-text {
+  width: 580px;
+  max-width: calc(100vw - 32px);
+}
+
 .hero__desc p {
   font-family: Inter, system-ui, sans-serif;
   font-weight: 500;
